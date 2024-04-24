@@ -11,11 +11,22 @@ import (
 )
 
 const (
+	envBrokerURLName = "BROKER_URL"
+)
+
+var (
 	brokerURL = "localhost:9092"
 	topicName = "messages"
 )
 
 func main() {
+	envBrokerURL := os.Getenv(envBrokerURLName)
+	if envBrokerURL != "" {
+		brokerURL = envBrokerURL
+	}
+
+	log.Printf("Try to connect to kafka with URL: %s\n", brokerURL)
+
 	// Connect to kafka
 	worker, err := connectConsumer([]string{brokerURL})
 	if err != nil {

@@ -4,12 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/Shopify/sarama"
 )
 
 const (
+	envBrokerURLName = "BROKER_URL"
+)
+
+var (
 	brokerURL = "localhost:9092"
 	topicName = "messages"
 )
@@ -20,6 +25,13 @@ type Message struct {
 }
 
 func main() {
+	envBrokerURL := os.Getenv(envBrokerURLName)
+	if envBrokerURL != "" {
+		brokerURL = envBrokerURL
+	}
+
+	log.Printf("Try to connect to kafka with URL: %s\n", brokerURL)
+
 	// Connect to kafka
 	brokersUrl := []string{brokerURL}
 	producer, err := ConnectProducer(brokersUrl)
