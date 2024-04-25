@@ -2,7 +2,10 @@ module writer
 
 go 1.21
 
-require github.com/Shopify/sarama v1.36.0
+require (
+	github.com/Shopify/sarama v1.36.0
+	github.com/google/uuid v1.3.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

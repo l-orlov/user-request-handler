@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/google/uuid"
 )
 
 const (
@@ -21,7 +22,8 @@ var (
 
 // Message struct
 type Message struct {
-	Text string `form:"text" json:"text"`
+	ID   uuid.UUID `json:"id"`
+	Text string    `json:"text"`
 }
 
 func main() {
@@ -29,8 +31,6 @@ func main() {
 	if envBrokerURL != "" {
 		brokerURL = envBrokerURL
 	}
-
-	log.Printf("Try to connect to kafka with URL: %s\n", brokerURL)
 
 	// Connect to kafka
 	brokersUrl := []string{brokerURL}
@@ -47,6 +47,7 @@ func main() {
 		case <-ticker.C:
 			// Create msg
 			msg := &Message{
+				ID:   uuid.New(),
 				Text: fmt.Sprintf("Message with number %d", i),
 			}
 			msgInBytes, err := json.Marshal(msg)
