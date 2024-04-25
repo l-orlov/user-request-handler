@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,17 +20,17 @@ import (
 )
 
 // Custom metric of type counter
-var messageStatus = prometheus.NewCounterVec(
+var messageResult = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "message_handling_result_count",
 		Help: "Count of message handling result",
 	},
-	[]string{"status"},
+	[]string{"result"},
 )
 
 func init() {
 	// Register the counter so prometheus can collect this metric
-	prometheus.MustRegister(messageStatus)
+	prometheus.MustRegister(messageResult)
 }
 
 const (
@@ -135,9 +136,9 @@ func handleConsumerMessage(
 ) error {
 	log.Printf("Received message: Topic(%s) | Message(%s) \n", msg.Topic, string(msg.Value))
 
-	status := "not_ok"
+	result := "not_ok"
 	defer func() {
-		messageStatus.WithLabelValues(status).Inc()
+		messageResult.WithLabelValues(result).Inc()
 	}()
 
 	msgToStore := &Message{}
@@ -152,8 +153,12 @@ func handleConsumerMessage(
 		return err
 	}
 
-	status = "ok"
 	log.Printf("Store message id=%s in DB with inser_id=%s \n", msgToStore.ID, insertResult.InsertedID)
+
+	// Use random for different metric values metric (80% ok and 20% not_ok)
+	if rand.Float32() <= 0.8 {
+		result = "ok"
+	}
 
 	return nil
 }
