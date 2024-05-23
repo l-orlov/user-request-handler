@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
@@ -18,6 +19,8 @@ const (
 var (
 	brokerURL = "localhost:9092"
 	topicName = "messages"
+
+	producer sarama.SyncProducer
 )
 
 // Message struct
@@ -34,11 +37,18 @@ func main() {
 
 	// Connect to kafka
 	brokersUrl := []string{brokerURL}
-	producer, err := ConnectProducer(brokersUrl)
+	var err error
+	producer, err = ConnectProducer(brokersUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer producer.Close()
+
+	// Run API handling
+	app := fiber.New()
+	api := app.Group("/api/v1") // api
+	api.Post("/messages", createComment)
+	go app.Listen(":8081")
 
 	i := 0
 	ticker := time.NewTicker(2 * time.Second)
@@ -56,7 +66,7 @@ func main() {
 			}
 
 			// Send msg to kafka
-			err = PushMsgToQueue(producer, topicName, msgInBytes)
+			err = PushMsgToQueue(topicName, msgInBytes)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -66,7 +76,7 @@ func main() {
 	}
 }
 
-func PushMsgToQueue(producer sarama.SyncProducer, topic string, message []byte) error {
+func PushMsgToQueue(topic string, message []byte) error {
 	msg := &sarama.ProducerMessage{
 		Topic: topic,
 		Value: sarama.StringEncoder(message),
@@ -94,4 +104,42 @@ func ConnectProducer(brokersUrl []string) (sarama.SyncProducer, error) {
 	}
 
 	return conn, nil
+}
+
+// createComment handler
+func createComment(c *fiber.Ctx) error {
+	msg := &Message{}
+	//  Parse body into comment struct
+	if err := c.BodyParser(msg); err != nil {
+		log.Println(err)
+		c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+		return err
+	}
+	// convert body into bytes and send it to kafka
+	msgInBytes, err := json.Marshal(msg)
+
+	// Send msg to kafka
+	err = PushMsgToQueue(topicName, msgInBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Return Comment in JSON format
+	err = c.JSON(&fiber.Map{
+		"success": true,
+		"info":    "Message pushed successfully",
+		"message": msg,
+	})
+	if err != nil {
+		c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"info":    "Error creating message",
+		})
+		return err
+	}
+
+	return err
 }
