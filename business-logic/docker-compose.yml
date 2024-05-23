@@ -10,9 +10,9 @@ services:
       MONGO_INITDB_ROOT_USERNAME: "user"
       MONGO_INITDB_ROOT_PASSWORD: "pass"
 
-  writer:
+  writer1:
     image: ${DOCKER_REGISTRY-}writer
-    container_name: writer
+    container_name: writer1
     build:
       context: ./writer
       dockerfile: Dockerfile
@@ -20,6 +20,28 @@ services:
       - "8081:8081"
     environment:
       BROKER_URL: "host.docker.internal:29092"
+
+  writer2:
+    image: ${DOCKER_REGISTRY-}writer
+    container_name: writer2
+    build:
+      context: ./writer
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8081"
+    environment:
+      BROKER_URL: "host.docker.internal:29092"
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - writer1
+      - writer2
 
   reader:
     image: ${DOCKER_REGISTRY-}reader

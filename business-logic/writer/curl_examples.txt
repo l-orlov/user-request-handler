@@ -1,7 +1,14 @@
+// For writer1 requests
 curl --location --request POST '0.0.0.0:8081/api/v1/messages' \
 --header 'Content-Type: application/json' \
 --data-raw '{ "id":"df840d41-d2d7-4150-b697-550879de0768", "text":"nice boy" }'
 
-curl --location --request POST '0.0.0.0:8081/api/v1/messages' \
+// For writer2 requests
+curl --location --request POST '0.0.0.0:8082/api/v1/messages' \
 --header 'Content-Type: application/json' \
 --data-raw '{ "id":"2590b56c-ec38-435e-bf70-911c3d6178b3", "text":"keep up the good work" }'
+
+// For nginx requests
+curl --location --request POST '0.0.0.0:80/api/v1/messages' \
+--header 'Content-Type: application/json' \
+--data-raw '{ "id":"df840d41-d2d7-4150-b697-550879de0768", "text":"nice boy" }'
